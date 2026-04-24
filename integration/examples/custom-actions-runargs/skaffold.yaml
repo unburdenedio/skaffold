@@ -1,0 +1,30 @@
+apiVersion: skaffold/v4beta15
+kind: Config
+metadata:
+  name: custom-actions-runargs
+
+customActions:
+  - name: hardened-action
+    executionMode:
+      local:
+        runArgs:
+          - "--user=1000:1000"
+          - "--cap-drop=NET_RAW"
+          - "-e=SENTINEL=hardened"
+    containers:
+      - name: hardened
+        image: alpine:3.20
+        command: ["/bin/sh"]
+        args: ["-c", "echo uid=$(id -u) && echo sentinel=$SENTINEL"]
+
+  - name: gcloud-auth-list
+    executionMode:
+      local:
+        runArgs:
+          - "-v=/root/.config/gcloud:/root/.config/gcloud:ro"
+          - "--network=host"
+    containers:
+      - name: gcloud
+        image: google/cloud-sdk:slim
+        command: ["gcloud"]
+        args: ["auth", "list"]

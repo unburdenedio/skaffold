@@ -109,6 +109,53 @@ A Custom Action has an execution mode associated with it that indicates Skaffold
 
 This is the default configuration when no [`customActions[].executionMode`]({{< relref "/docs/references/yaml/#customActions-executionMode" >}}) is specified. With this execution mode, Skaffold will run every container associated to a given Custom Action with a Docker daemon.
 
+##### Passing Docker run flags with `runArgs`
+
+When an action needs to reach host resources (for example your local
+`~/.config/gcloud` credentials) or to tighten its runtime (dropping
+capabilities, pinning a non-root user), use
+[`customActions[].executionMode.local.runArgs`]({{< relref
+"/docs/references/yaml/#customActions-executionMode-local-runArgs" >}}).
+Skaffold parses each entry with a whitelist and overlays the result on
+the Docker `HostConfig`/`Config` used to start the container:
+
+| Flag | Effect |
+| --- | --- |
+| `--network=<mode>` | Sets `HostConfig.NetworkMode`. Accepts `host`, `bridge`, `none`, or a named network. |
+| `-v=<src>:<dst>[:opts]`, `--volume=<src>:<dst>[:opts]` | Appends to `HostConfig.Binds`. |
+| `-e=<KEY>=<VALUE>`, `--env=<KEY>=<VALUE>` | Appends to `Config.Env`. |
+| `--user=<uid[:gid]>` | Sets `Config.User`. |
+| `--add-host=<host>:<ip>` | Appends to `HostConfig.ExtraHosts`. |
+| `--tmpfs=<path>[:opts]` | Merges into `HostConfig.Tmpfs`. |
+| `--privileged` | Sets `HostConfig.Privileged=true`. |
+| `--cap-add=<CAP>`, `--cap-drop=<CAP>` | Appends to `HostConfig.CapAdd`/`CapDrop`. |
+
+Only the `--flag=value` form is accepted — space-separated values and
+unknown flags are rejected at load time so typos fail loudly rather
+than silently dropping settings.
+
+```yaml
+customActions:
+  - name: reuse-local-adc
+    executionMode:
+      local:
+        runArgs:
+          - "-v=/root/.config/gcloud:/root/.config/gcloud:ro"
+          - "--network=host"
+          - "-e=CLOUDSDK_CORE_PROJECT=my-project"
+    containers:
+      - name: gcloud
+        image: google/cloud-sdk:slim
+        command: ["gcloud"]
+        args: ["auth", "list"]
+```
+
+> **Security note:** `runArgs` bypasses Skaffold's sandbox and hands
+> raw flags to the host Docker daemon. Avoid committing `--privileged`,
+> broad bind mounts (`-v=/:/host`) or secret values to source control.
+> Prefer deploy parameters or environment files for per-invocation
+> overrides.
+
 #### Remote (K8s job)
 
 With this execution mode, Skaffold will create a K8s job for each container associated with the given action. For the following configuration:

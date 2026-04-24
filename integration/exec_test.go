@@ -67,6 +67,14 @@ func TestExec_LocalActions(t *testing.T) {
 				"[task7] bye-from-env-file",
 			},
 		},
+		{
+			description: "action with runArgs overlay",
+			action:      "action-runargs",
+			expectedMsgs: []string{
+				"[runargs-task] uid=1000",
+				"[runargs-task] sentinel=from-runargs",
+			},
+		},
 	}
 
 	for _, test := range tests {
