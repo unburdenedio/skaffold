@@ -76,6 +76,10 @@ type ContainerCreateOpts struct {
 	ContainerConfig *container.Config
 	VerifyTestName  string
 	Labels          map[string]string
+	// HostConfigApply, if non-nil, is invoked after the default HostConfig
+	// has been constructed in Run and lets callers overlay additional
+	// fields (e.g. Binds, ExtraHosts, NetworkMode overrides).
+	HostConfigApply func(*container.HostConfig)
 }
 
 // LocalDaemon talks to a local Docker API.
@@ -230,6 +234,9 @@ func (l *localDaemon) Run(ctx context.Context, out io.Writer, opts ContainerCrea
 		VolumesFrom:  opts.VolumesFrom,
 		PortBindings: opts.Bindings,
 		Mounts:       opts.Mounts,
+	}
+	if opts.HostConfigApply != nil {
+		opts.HostConfigApply(hCfg)
 	}
 
 	c, err := l.apiClient.ContainerCreate(ctx, opts.ContainerConfig, hCfg, nil, nil, opts.Name)
