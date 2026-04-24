@@ -30,8 +30,8 @@ import (
 // render, delete (pre-existing) + deploy, dev, run, exec (added for
 // Cloud Deploy custom-target parity).
 //
-// Note: the filter command also accepts --set but not --set-value-file and
-// is therefore covered by a dedicated check below.
+// Note: the filter command also accepts --set but not --set-value-file, so
+// it is intentionally excluded from this check.
 func TestDeployParamsFlagsAvailable(t *testing.T) {
 	cases := []struct {
 		name string

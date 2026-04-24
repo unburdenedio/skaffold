@@ -187,5 +187,5 @@ On key collision between a deploy parameter and a container-declared `env:` entr
 
 ### Availability across commands
 
-The `--set` and `--set-value-file` flags are available on `render`, `filter`, `delete`, `deploy`, `dev`, `run`, and `exec`. On the render/deploy commands the values flow into manifest templating; on `exec` they additionally become container environment variables for the invoked action.
+The `--set` and `--set-value-file` flags are available on `render`, `delete`, `deploy`, `dev`, `run`, and `exec`. The `--set` flag is also available on `filter`. On the render/deploy commands the values flow into manifest templating; on `exec` they additionally become container environment variables for the invoked action.
 

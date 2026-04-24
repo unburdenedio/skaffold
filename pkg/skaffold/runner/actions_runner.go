@@ -137,7 +137,13 @@ func loadEnvMap(envFile string) (map[string]string, error) {
 // highest: base map (e.g. values from --verify-env-file) < --set-value-file
 // entries < --set entries. A nil base map is treated as empty.
 func mergeDeployParams(base map[string]string, valueFile string, overrides []string) (map[string]string, error) {
-	out := map[string]string{}
+	if valueFile == "" && len(overrides) == 0 {
+		if len(base) == 0 {
+			return nil, nil
+		}
+		return base, nil
+	}
+	out := make(map[string]string, len(base))
 	for k, v := range base {
 		out[k] = v
 	}
