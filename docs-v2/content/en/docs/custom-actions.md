@@ -155,3 +155,37 @@ $ skaffold exec update-infra --build-artifacts=build.json
 
 That way, Skaffold will be able to run the `local-db-updater` image in the `update-infra` Custom Action.
 
+## Passing deploy parameters
+
+Custom Actions can receive **deploy parameters** as environment variables in every container of the invoked action. This mirrors [Google Cloud Deploy custom targets](https://cloud.google.com/deploy/docs/custom-targets#custom_targets_and_deploy_parameters), where deploy parameters are surfaced to render and deploy containers.
+
+Provide values on the command line with `--set` (repeatable) or in an `.env`-style file via `--set-value-file`:
+
+```console
+$ skaffold exec terraform-apply \
+    --set TF_VAR_bucket=my-bkt \
+    --set TF_VAR_region=us-central1 \
+    --set-value-file infra.env
+```
+
+Inside every container of the invoked action, the values become environment variables:
+
+```console
+$ echo "$TF_VAR_bucket"
+my-bkt
+```
+
+### Precedence
+
+When the same key is supplied from multiple sources, later entries override earlier ones:
+
+1. The base env map (e.g. `--env-file` contents).
+2. Entries from `--set-value-file`.
+3. Entries from `--set` (highest priority).
+
+On key collision between a deploy parameter and a container-declared `env:` entry in `skaffold.yaml`, the deploy parameter wins, matching Cloud Deploy behaviour.
+
+### Availability across commands
+
+The `--set` and `--set-value-file` flags are available on `render`, `filter`, `delete`, `deploy`, `dev`, `run`, and `exec`. On the render/deploy commands the values flow into manifest templating; on `exec` they additionally become container environment variables for the invoked action.
+
