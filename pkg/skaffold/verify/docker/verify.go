@@ -35,6 +35,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/GoogleContainerTools/skaffold/v2/pkg/skaffold/constants"
+	actionsdocker "github.com/GoogleContainerTools/skaffold/v2/pkg/skaffold/actions/docker"
 	dockerport "github.com/GoogleContainerTools/skaffold/v2/pkg/skaffold/deploy/docker/port"
 	"github.com/GoogleContainerTools/skaffold/v2/pkg/skaffold/deploy/label"
 	dockerutil "github.com/GoogleContainerTools/skaffold/v2/pkg/skaffold/docker"
@@ -225,6 +226,17 @@ func (v *Verifier) createAndRunContainer(ctx context.Context, out io.Writer, art
 		containerCfg.Cmd = tc.Container.Args
 	}
 
+	// Parse the optional per-test-case runArgs whitelist. Unknown flags are
+	// surfaced as a test-case failure instead of being silently dropped.
+	var runArgs *actionsdocker.RunArgs
+	if local := tc.ExecutionMode.LocalExecutionMode; local != nil {
+		parsed, err := actionsdocker.ParseRunArgs(local.RunArgs)
+		if err != nil {
+			return fmt.Errorf("verify test %q: %w", tc.Name, err)
+		}
+		runArgs = parsed
+	}
+
 	// Use container name from test case if available, otherwise derive from image
 	containerName := v.getContainerName(ctx, artifact.ImageName, tc.Container.Name)
 
@@ -233,6 +245,7 @@ func (v *Verifier) createAndRunContainer(ctx context.Context, out io.Writer, art
 		Network:         v.network,
 		ContainerConfig: containerCfg,
 		VerifyTestName:  tc.Name,
+		HostConfigApply: runArgs.ApplyToHostConfig,
 	}
 
 	bindings, err := v.portManager.AllocatePorts(artifact.ImageName, v.resources, containerCfg, nat.PortMap{})
@@ -252,6 +265,9 @@ func (v *Verifier) createAndRunContainer(ctx context.Context, out io.Writer, art
 		envVars = append(envVars, k+"="+v)
 	}
 	opts.ContainerConfig.Env = envVars
+	// Apply runArgs overlays (User, additional env vars) last so they stack
+	// on top of schema-sourced env and --verify-env-file values.
+	runArgs.ApplyToContainerConfig(opts.ContainerConfig)
 
 	eventV2.VerifyInProgress(opts.VerifyTestName)
 	statusCh, errCh, id, err := v.client.Run(ctx, out, opts)

@@ -3442,6 +3442,15 @@
     },
     "LocalVerifier": {
       "properties": {
+        "runArgs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "an optional list of docker-run-style flags applied to the verify test container. Accepts the same conservative whitelist as `customActions.*.executionMode.local.runArgs`: `--network`, `-v` / `--volume`, `-e` / `--env`, `--user`, `--add-host`, `--tmpfs`, `--privileged`, `--cap-add`, `--cap-drop`. Unknown flags are rejected. Each flag must be in `--flag=value` form.",
+          "x-intellij-html-description": "an optional list of docker-run-style flags applied to the verify test container. Accepts the same conservative whitelist as <code>customActions.*.executionMode.local.runArgs</code>: <code>--network</code>, <code>-v</code> / <code>--volume</code>, <code>-e</code> / <code>--env</code>, <code>--user</code>, <code>--add-host</code>, <code>--tmpfs</code>, <code>--privileged</code>, <code>--cap-add</code>, <code>--cap-drop</code>. Unknown flags are rejected. Each flag must be in <code>--flag=value</code> form.",
+          "default": "[]"
+        },
         "useLocalImages": {
           "type": "boolean",
           "description": "if true, will first check if the containers images exist locally before triggering a pull. Defaults to false.",
@@ -3450,7 +3459,8 @@
         }
       },
       "preferredOrder": [
-        "useLocalImages"
+        "useLocalImages",
+        "runArgs"
       ],
       "additionalProperties": false,
       "type": "object",

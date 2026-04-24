@@ -684,6 +684,14 @@ type LocalVerifier struct {
 	// UseLocalImages if true, will first check if the containers images exist locally before triggering a pull.
 	// Defaults to false.
 	UseLocalImages bool `yaml:"useLocalImages,omitempty"`
+
+	// RunArgs is an optional list of docker-run-style flags applied to the
+	// verify test container. Accepts the same conservative whitelist as
+	// `customActions.*.executionMode.local.runArgs`: `--network`, `-v` /
+	// `--volume`, `-e` / `--env`, `--user`, `--add-host`, `--tmpfs`,
+	// `--privileged`, `--cap-add`, `--cap-drop`. Unknown flags are rejected.
+	// Each flag must be in `--flag=value` form.
+	RunArgs []string `yaml:"runArgs,omitempty"`
 }
 
 // KubernetesClusterVerifier uses the `kubectl` CLI to create veriy test case
