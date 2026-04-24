@@ -77,6 +77,10 @@ func ParseRunArgs(args []string) (*RunArgs, error) {
 		}
 		key, val, ok := strings.Cut(arg, "=")
 		if !ok {
+			// No '=' means either an unknown bare flag or the space-separated form.
+			if strings.HasPrefix(arg, "--") || strings.HasPrefix(arg, "-") {
+				return nil, fmt.Errorf("runArgs[%d] %q: unsupported flag %q (only --flag=value form is supported; allowed: --network, -v/--volume, -e/--env, --user, --add-host, --tmpfs, --privileged, --cap-add, --cap-drop)", i, raw, arg)
+			}
 			return nil, fmt.Errorf("runArgs[%d] %q: only --flag=value form is supported (no space-separated values)", i, raw)
 		}
 		switch key {
